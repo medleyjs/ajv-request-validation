@@ -1,6 +1,6 @@
 {
   "name": "ajv-request-validator",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Tool for validating the `request` object of popular frameworks with Ajv",
   "main": "ajv-request-validator.js",
   "files": [
