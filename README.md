@@ -1,5 +1,9 @@
 # ajv-request-validator
 
+[![npm Version](https://img.shields.io/npm/v/ajv-request-validator.svg)](https://www.npmjs.com/package/ajv-request-validator)
+[![Build Status](https://travis-ci.org/medleyjs/ajv-request-validator.svg?branch=master)](https://travis-ci.org/medleyjs/ajv-request-validator)
+[![Coverage Status](https://coveralls.io/repos/github/medleyjs/ajv-request-validator/badge.svg?branch=master)](https://coveralls.io/github/medleyjs/ajv-request-validator?branch=master)
+
 Tool for validating the `request` object of popular Node.js web frameworks
 with [Ajv](https://github.com/epoberezkin/ajv).
 
