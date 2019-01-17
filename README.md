@@ -23,7 +23,7 @@ yarn add ajv-request-validator
 
 ## Usage
 
-Example with Express:
+Example with [Express](http://expressjs.com/):
 
 ```js
 const RequestValidator = require('ajv-request-validator');
@@ -62,7 +62,7 @@ const reqValidator = new RequestValidator();
 app.route({
   method: 'POST',
   path: '/user',
-  beforeHandler: reqValidator.compile({
+  preHandler: reqValidator.compile({
     body: {
       type: 'object',
       properties: {
@@ -77,27 +77,12 @@ app.route({
 });
 ```
 
-With Medley/Fastify, it may be helpful to add the `reqValidator` to the
-`app` so that it may be accessed throughout your codebase:
-
-```js
-app.decorate('reqValidator', reqValidator);
-
-// Then somewhere else
-app.route({
-  method: 'POST',
-  path: '/user',
-  beforeHandler: app.reqValidator.compile({ ... }),
-  handler: function(req, res) { }
-});
-```
-
 ## API
 
 + [`new RequestValidator([options])`](#new-requestvalidatoroptions)
   + [`reqValidator.ajv`](#reqvalidatorajv)
   + [`reqValidator.compile(schema)`](#reqvalidatorcompileschema)
-  
+
 ### `new RequestValidator([options])`
 
 The `ajv-request-validator` module exports a class. The class constructor can optionally
@@ -122,7 +107,7 @@ const Ajv = require('ajv');
 const ajv = new Ajv();
 
 const reqValidator = new RequestValidator(ajv);
-reqValidator.ajv === ajv; // true
+console.log(reqValidator.ajv === ajv); // true
 ```
 
 ### `reqValidator.ajv`
@@ -175,14 +160,14 @@ function(req, res, next) { }
 ### Usage with other frameworks
 
 Since the [`.compile()`](#reqvalidatorcompileschema) method returns an Express-style
-middleware function, it is not initially compatible with other frameworks that have
+middleware function, it is not initially compatible with frameworks that have
 a different middleware signature.
 
 However, the [`RequestValidator`](#new-requestvalidatoroptions) class can be subclassed
 to override the [`.compile()`](#reqvalidatorcompileschema) method to return a function
 compatible with other frameworks.
 
-Here's an example of extending `RequestValidator` to work with Koa:
+Here's an example of extending `RequestValidator` to work with [Koa](https://koajs.com/):
 
 ```js
 const RequestValidator = require('ajv-request-validator');
@@ -190,7 +175,7 @@ const RequestValidator = require('ajv-request-validator');
 class KoaRequestValidator extends RequestValidator {
   compile(schema) {
     const middleware = super.compile(schema);
-    
+
     return function koaMiddleware(ctx, next) {
       return new Promise((resolve, reject) => {
         middleware(ctx.request, null, (err) => {
