@@ -15,32 +15,28 @@ class RequestValidator {
       throw new TypeError('schema must be an object');
     }
 
-    const validators = {};
-    var hasProps = false;
+    const propNames = Object.keys(schema);
 
-    for (const propName in schema) {
-      hasProps = true;
-      validators[propName] = this.ajv.compile(schema[propName]);
-    }
-
-    if (hasProps === false) {
+    if (propNames.length === 0) {
       throw new Error('The schema must have at least 1 property');
     }
 
-    const validateReq = compileValidationFunction(validators);
+    const validators = {};
+
+    for (const propName of propNames) {
+      validators[propName] = this.ajv.compile(schema[propName]);
+    }
+
+    const args = 'req, validators, createError';
+    const code = '"use strict"\n' + propNames.map(propName => `
+      if (validators.${propName}(req.${propName}) === false)
+        return createError('${propName}', validators.${propName}.errors)
+    `).join('') + `
+      return null`;
+    const validateReq = new Function(args, code);
+
     return createMiddleware(validateReq, validators, createValidationError);
   }
-}
-
-function compileValidationFunction(validators) {
-  const args = 'req, validators, createError';
-  const code = '"use strict"\n' + Object.keys(validators).map(propName => `
-    if (validators.${propName}(req.${propName}) === false)
-      return createError('${propName}', validators.${propName}.errors)
-  `).join('') + `
-    return null`;
-
-  return new Function(args, code);
 }
 
 function createValidationError(propName, errors) {
@@ -60,7 +56,7 @@ function createValidationError(propName, errors) {
 }
 
 function createMiddleware(validateReq, validators, createError) {
-  return function middleware(req, res, next) {
+  return function validationMiddleware(req, res, next) {
     next(validateReq(req, validators, createError));
   };
 }
