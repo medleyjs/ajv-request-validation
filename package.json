@@ -1,7 +1,9 @@
 {
   "name": "ajv-request-validator",
   "version": "0.1.0",
-  "description": "Tool for validating the `request` object of popular frameworks with Ajv",
+  "description": "Validates the `request` object of popular Node.js web frameworks with Ajv",
+  "license": "MIT",
+  "author": "Nathan Woltman <nwoltman@outlook.com>",
   "main": "ajv-request-validator.js",
   "files": [
     "ajv-request-validator.js"
@@ -9,19 +11,13 @@
   "engines": {
     "node": ">=6"
   },
-  "license": "MIT",
-  "author": "Nathan Woltman <nwoltman@outlook.com>",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/medleyjs/ajv-request-validator.git"
-  },
-  "homepage": "https://github.com/medleyjs/ajv-request-validator#readme",
-  "bugs": {
-    "url": "https://github.com/medleyjs/ajv-request-validator/issues"
-  },
+  "repository": "github:medleyjs/ajv-request-validator",
+  "homepage": "https://github.com/medleyjs/ajv-request-validator",
+  "bugs": "https://github.com/medleyjs/ajv-request-validator/issues",
   "keywords": [
     "ajv",
     "request",
+    "validator",
     "validation",
     "schema",
     "json-schema",

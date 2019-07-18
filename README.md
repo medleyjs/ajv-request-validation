@@ -3,9 +3,9 @@
 [![npm Version](https://img.shields.io/npm/v/ajv-request-validator.svg)](https://www.npmjs.com/package/ajv-request-validator)
 [![Build Status](https://travis-ci.org/medleyjs/ajv-request-validator.svg?branch=master)](https://travis-ci.org/medleyjs/ajv-request-validator)
 [![Coverage Status](https://coveralls.io/repos/github/medleyjs/ajv-request-validator/badge.svg?branch=master)](https://coveralls.io/github/medleyjs/ajv-request-validator?branch=master)
+[![dependencies Status](https://img.shields.io/david/medleyjs/ajv-request-validator.svg)](https://david-dm.org/medleyjs/ajv-request-validator)
 
-Tool for validating the `request` object of popular Node.js web frameworks
-with [Ajv](https://github.com/epoberezkin/ajv).
+Validates the `request` object of popular Node.js web frameworks with [Ajv](https://github.com/epoberezkin/ajv).
 
 + [Installation](#installation)
 + [Usage](#usage)
@@ -14,10 +14,8 @@ with [Ajv](https://github.com/epoberezkin/ajv).
 ## Installation
 
 ```sh
-# npm
 npm install ajv-request-validator --save
-
-# yarn
+# or
 yarn add ajv-request-validator
 ```
 
@@ -107,13 +105,13 @@ const Ajv = require('ajv');
 const ajv = new Ajv();
 
 const reqValidator = new RequestValidator(ajv);
+
 console.log(reqValidator.ajv === ajv); // true
 ```
 
 ### `reqValidator.ajv`
 
-The is a reference to the `ajv` instance that the `reqValidator` will use to
-compile validation functions.
+The `ajv` instance that the `reqValidator` will use to compile validation functions.
 
 ```js
 reqValidator.ajv.addSchema({
@@ -131,7 +129,7 @@ reqValidator.ajv.addFormat('userID', /[0-9]{9,16}/);
 ### `reqValidator.compile(schema)`
 
 Compiles a middleware function that validates the `req` object and then calls `next()` with the
-result (either `null` or a validation error). The keys of the `schema` object correspond with
+result (either a validation error or `null` on success). The keys of the `schema` object correspond with
 the names of the properties on the `req` object to validate (usually `body` or `query`).
 
 ```js
@@ -147,7 +145,7 @@ const middleware = reqValidator.compile({
 
 // Use in Express
 app.post('/user', middleware, (req, res, next) => {
-  // This handler is only called if `req.body` matches the schema
+  // This middleware is only called if `req.body` matches the schema
 });
 ```
 
@@ -163,9 +161,9 @@ Since the [`.compile()`](#reqvalidatorcompileschema) method returns an Express-s
 middleware function, it is not initially compatible with frameworks that have
 a different middleware signature.
 
-However, the [`RequestValidator`](#new-requestvalidatoroptions) class can be subclassed
-to override the [`.compile()`](#reqvalidatorcompileschema) method to return a function
-compatible with other frameworks.
+If a different form of middleware is needed, the [`RequestValidator`](#new-requestvalidatoroptions)
+class can be subclassed to override the [`.compile()`](#reqvalidatorcompileschema) method to return
+a function compatible with your specific framework.
 
 Here's an example of extending `RequestValidator` to work with [Koa](https://koajs.com/):
 
@@ -174,11 +172,11 @@ const RequestValidator = require('ajv-request-validator');
 
 class KoaRequestValidator extends RequestValidator {
   compile(schema) {
-    const middleware = super.compile(schema);
+    const validate = super.compile(schema);
 
     return function koaMiddleware(ctx, next) {
       return new Promise((resolve, reject) => {
-        middleware(ctx.request, null, (err) => {
+        validate(ctx.request, null, (err) => {
           if (err === null) {
             resolve(next());
           } else {
