@@ -10,7 +10,7 @@ class RequestValidator {
     this.ajv = ajv;
   }
 
-  compile(schema) {
+  compile(schema, options) {
     if (typeof schema !== 'object' || schema === null) {
       throw new TypeError('schema must be an object');
     }
@@ -35,6 +35,10 @@ class RequestValidator {
       return null`;
     const validateReq = new Function(args, code);
 
+    if (options && options.middleware === false) {
+      return createDirectValidator(validateReq, validators, createValidationError);
+    }
+
     return createMiddleware(validateReq, validators, createValidationError);
   }
 }
@@ -53,6 +57,12 @@ function createValidationError(propName, errors) {
   const error = new Error(message);
   error.status = 400;
   return error;
+}
+
+function createDirectValidator(validateReq, validators, createError) {
+  return function validate(req) {
+    return validateReq(req, validators, createError);
+  };
 }
 
 function createMiddleware(validateReq, validators, createError) {

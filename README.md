@@ -7,10 +7,6 @@
 
 Validates the `request` object of popular Node.js web frameworks with [Ajv](https://github.com/epoberezkin/ajv).
 
-+ [Installation](#installation)
-+ [Usage](#usage)
-+ [API](#api)
-
 ## Installation
 
 ```sh
@@ -77,10 +73,11 @@ app.route({
 
 ## API
 
-+ [`new RequestValidator([options])`](#new-requestvalidatoroptions)
++ [`new RequestValidator([options])`](#RequestValidator)
   + [`reqValidator.ajv`](#reqvalidatorajv)
-  + [`reqValidator.compile(schema)`](#reqvalidatorcompileschema)
+  + [`reqValidator.compile(schema[, options])`](#compile)
 
+<a id="RequestValidator"></a>
 ### `new RequestValidator([options])`
 
 The `ajv-request-validator` module exports a class. The class constructor can optionally
@@ -126,7 +123,12 @@ reqValidator.ajv.addSchema({
 reqValidator.ajv.addFormat('userID', /[0-9]{9,16}/);
 ```
 
-### `reqValidator.compile(schema)`
+<a id="compile"></a>
+### `reqValidator.compile(schema[, options])`
+
++ `schema` - And `Object` mapping `request` properties to an [Ajv](https://ajv.js.org/) schema.
++ `options` - Optional options `Object`.
+  + `options.middleware` - If `false`, a function that directly validates the `request` object will be returned. Defaults to `true`.
 
 Compiles a middleware function that validates the `req` object and then calls `next()` with the
 result (either a validation error or `null` on success). The keys of the `schema` object correspond with
@@ -152,18 +154,45 @@ app.post('/user', middleware, (req, res, next) => {
 The `middleware` function is an Express-style middleware function with the signature:
 
 ```js
-function(req, res, next) { }
+function middleware(req, res, next) { }
 ```
+
+When the `middleware` option is `false`, `.compile()` returns a function that directly validates
+the `request` object.
+
+```js
+function validate(req) { } // Returns `null` or an Error
+```
+
+```js
+const validate = reqValidator.compile({
+  body: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      age: { type: 'number' }
+    }
+  }
+}, {middleware: false});
+
+app.post('/user', (req, res, next) => {
+  const result = validate(req);
+  // `result` will be `null` or an Error
+});
+```
+
+This is useful when using this module with frameworks that do not have Express-like middleware
+(see below for more info).
 
 ### Usage with other frameworks
 
-Since the [`.compile()`](#reqvalidatorcompileschema) method returns an Express-style
-middleware function, it is not initially compatible with frameworks that have
-a different middleware signature.
+Since the [`.compile()`](#compile) method returns an Express-style middleware
+function, it is not initially compatible with frameworks that have a different
+middleware signature.
 
-If a different form of middleware is needed, the [`RequestValidator`](#new-requestvalidatoroptions)
-class can be subclassed to override the [`.compile()`](#reqvalidatorcompileschema) method to return
-a function compatible with your specific framework.
+If a different form of middleware is needed, the [`RequestValidator`](#RequestValidator)
+class can be subclassed to override the [`.compile()`](#compile) method to return
+a function compatible with a specific framework.
 
 Here's an example of extending `RequestValidator` to work with [Koa](https://koajs.com/):
 
@@ -172,19 +201,17 @@ const RequestValidator = require('ajv-request-validator');
 
 class KoaRequestValidator extends RequestValidator {
   compile(schema) {
-    const validate = super.compile(schema);
+    const validate = super.compile(schema, {middleware: false});
 
-    return function koaMiddleware(ctx, next) {
-      return new Promise((resolve, reject) => {
-        validate(ctx.request, null, (err) => {
-          if (err === null) {
-            resolve(next());
-          } else {
-            reject(err);
-          }
-        });
-      });
+    return async function koaMiddleware(ctx, next) {
+      const err = validate(ctx.request);
+      if (err !== null) {
+        throw err;
+      }
+      await next();
     };
   }
 }
+
+const reqValidator = new KoaRequestValidator();
 ```

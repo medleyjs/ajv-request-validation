@@ -42,6 +42,14 @@ describe('reqValidator.compile()', () => {
       () => reqValidator.compile('string'),
       /^TypeError: schema must be an object$/
     );
+    assert.throws(
+      () => reqValidator.compile(null, {middleware: false}),
+      /^TypeError: schema must be an object$/
+    );
+    assert.throws(
+      () => reqValidator.compile('string', {middleware: false}),
+      /^TypeError: schema must be an object$/
+    );
   });
 
   it('should throw if the schema object has no properties', () => {
@@ -55,7 +63,7 @@ describe('reqValidator.compile()', () => {
 
 });
 
-describe('compiled validator function', () => {
+describe('compiled validator middleware', () => {
 
   const res = null;
 
@@ -154,6 +162,119 @@ describe('compiled validator function', () => {
       assert.strictEqual(err.status, 400);
       assert.strictEqual(err.message, '`body.name` should be string, `body.age` should be number');
     });
+  });
+
+  it('should work the same if the `middleware` option is `true`', () => {
+    const reqValidator = new RequestValidator();
+    const middleware = reqValidator.compile({
+      body: {
+        type: 'object',
+        properties: {
+          name: {type: 'string'},
+          age: {type: 'number'},
+        },
+      },
+    }, {middleware: true});
+
+    middleware({
+      body: {name: 'Ajv', age: 6},
+    }, res, function next(err) {
+      assert.strictEqual(err, null);
+    });
+  });
+
+});
+
+describe('compiled validator function', () => {
+
+  it('should validate a single property', () => {
+    const reqValidator = new RequestValidator();
+    const validate = reqValidator.compile({
+      body: {
+        type: 'object',
+        properties: {
+          name: {type: 'string'},
+          age: {type: 'number'},
+        },
+      },
+    }, {middleware: false});
+
+    let err = validate({
+      body: {name: 'Ajv', age: 6},
+    });
+    assert.strictEqual(err, null);
+
+    err = validate({
+      body: {name: 1, age: 6},
+    });
+    assert(err instanceof Error);
+    assert.strictEqual(err.status, 400);
+    assert.strictEqual(err.message, '`body.name` should be string');
+
+    err = validate({
+      body: {name: 'Ajv', age: true},
+    });
+    assert(err instanceof Error);
+    assert.strictEqual(err.status, 400);
+    assert.strictEqual(err.message, '`body.age` should be number');
+  });
+
+  it('should validate a multiple properties', () => {
+    const reqValidator = new RequestValidator();
+    const validate = reqValidator.compile({
+      body: {
+        type: 'object',
+        properties: {
+          name: {type: 'string'},
+          age: {type: 'number'},
+        },
+      },
+      query: {
+        type: 'string',
+      },
+    }, {middleware: false});
+
+    let err = validate({
+      body: {name: 'Ajv', age: 6},
+      query: 'string',
+    });
+    assert.strictEqual(err, null);
+
+    err = validate({
+      body: {name: 1, age: 6},
+      query: 'string',
+    });
+    assert(err instanceof Error);
+    assert.strictEqual(err.status, 400);
+    assert.strictEqual(err.message, '`body.name` should be string');
+
+    err = validate({
+      body: {name: 'Ajv', age: 6},
+      query: {},
+    });
+    assert(err instanceof Error);
+    assert.strictEqual(err.status, 400);
+    assert.strictEqual(err.message, '`query` should be string');
+  });
+
+  it('should report multiple errors when the Ajv `allErrors` option is true', () => {
+    const reqValidator = new RequestValidator({allErrors: true});
+    const validate = reqValidator.compile({
+      body: {
+        type: 'object',
+        properties: {
+          name: {type: 'string'},
+          age: {type: 'number'},
+        },
+      },
+    }, {middleware: false});
+
+    const err = validate({
+      body: {name: false, age: null},
+    });
+    assert(err instanceof Error);
+    assert.strictEqual(err.status, 400);
+    assert.strictEqual(err.message, '`body.name` should be string, `body.age` should be number');
   });
 
 });
