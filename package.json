@@ -1,6 +1,6 @@
 {
   "name": "ajv-request-validator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Validates the `request` object of popular Node.js web frameworks with Ajv",
   "license": "MIT",
   "author": "Nathan Woltman <nwoltman@outlook.com>",
