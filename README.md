@@ -10,7 +10,7 @@ Validates the `request` object of popular Node.js web frameworks with [Ajv](http
 ## Installation
 
 ```sh
-npm install ajv-request-validator --save
+npm install ajv-request-validator
 # or
 yarn add ajv-request-validator
 ```
